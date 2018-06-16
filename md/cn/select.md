@@ -103,3 +103,73 @@ Scheduler::join();
 ```
 success
 ```
+
+
+### 2. Select写数据
+```
+<?php
+use \Go\Chan;
+use \Go\Scheduler;
+use \Go\Time;
+
+
+function write_data($ch, $data){
+    $data_written = new Chan(0);
+    
+    // try to write data to the channel, if the channel is not available to write, wait a 50ms
+    // loop until the data is successfully written
+    select(
+        [
+            'case', $ch, "<-", $data, function($value) use($done){
+                echo "data written:";
+                var_dump($value);
+                $data_written->close();
+            }
+        ],
+        [
+            'default', function(){
+                echo "channel full, wait 50ms for consumer to consume\n";
+                Time::usleep(50*1000);
+            }
+        ]
+    )->loop($data_written);
+}
+
+function producer($ch, $close){
+    select(
+        [ 'default', function() use($ch){
+            $data = rand();
+            write_data($ch, $data);
+        ]
+    )->loop($close);
+}
+
+function consumer($ch, $close){
+    select(
+        [
+            'case', $ch, "->", $data, function($value) {
+                echo "data consumed:";
+                var_dump($data);
+            }
+        ]
+    )->loop($close);
+}
+
+//main routine
+go( function(){
+    $ch = new Chan(["capacity"=>1000]); 
+    $close = new Chan(0);
+    go('producer', [$ch, $close]);
+    go('consumer', [$ch, $close]);
+    
+    //tell producer and consumer to exit after 10 seconds
+    Time.sleep(10);
+    $close->close();
+});
+
+Scheduler::join();
+```
+输出success，无断言失败：
+```
+success
+```
