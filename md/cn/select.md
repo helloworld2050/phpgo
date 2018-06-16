@@ -224,9 +224,10 @@ data written:int(321058344)
 ```
 上例是经典的生产者消费者场景：生产者生产并写入数据，消费者读取并处理数据，以channel为缓冲区。
 - 主过程生成一个20缓冲项的channel，传给producer和consumer；
-- producer()生成随机数，并持续调用write_data将数据写入缓冲区$ch，直到收到退出信号；
-> 如果缓冲区$ch满了，write_data会等50ms重试，一直到缓冲区有空了，成功写入数据才返回。  
+- producer()生成随机数，并持续调用write_data将数据写入缓冲区$ch，直到收到退出信号；  
+>如果缓冲区$ch满了，write_data会等50ms重试，一直到缓冲区有空了，成功写入数据才返回。  
 - consumer()从$ch读取并打印出读取的值，直到收到退出信号。
+
 退出信号即$close被关闭：select()返回一个Selector对象，通过调用Selector::loop($close)循环执行select中的case直到$close中有值或者$close被关闭，更多信息参见[Selector::Loop()](https://github.com/birdwyx/phpgo/blob/master/md/cn/selector-loop.md)）。  
 
 
